@@ -1,0 +1,116 @@
+
+setup
+1)download oracle xe (oracledatabase express edition)
+2)download sql developer
+3)open sql developer
+
+-----------------------------------------------------
+1)alter session  set "_oracle_script"=true;
+
+create user hr identified by "123" default tablespace users quota unlimited on users; 
+
+grant resource,connect,create table , create session to hr;
+
+excute
+
+2)new database connection
+
+3)name: xe_hr
+  username:HR
+  password:123
+
+	test save connect
+
+4)create table customers(
+customer_id number(15) primary key,
+first_name varchar2(30),
+last_name varchar2(30),
+gender varchar2(10)
+)
+
+excute
+
+5)your table is in table filtered
+
+6)rightclick and refresh
+
+7)press data tab to add data
+
+8)add record
+
+9)press alt+f10 to test queries in xe_hr
+
+10)select * from customers
+excute
+
+------------------------------------------------------------------------------------------------------------------------------
+
+****************NODEJS******************
+npm i oracledb nodemon express cors 
+
+///////////in server.js:
+
+const express = require('express');
+const app = express();
+const PORT = 5000;
+const odb = require('oracledb');
+const cors = require('cors');
+
+////////////formating database to object instead of arrays
+odb.outFormat= odb.OUT_FORMAT_OBJECT;
+
+////////function for crossorigin
+app.use(cors());
+
+
+
+///////////function for connection
+async function getConnected(req,res){
+    try{
+        const conn = await odb.getConnection({
+            user:'HR',
+            password:'123',
+            connectString:'localhost/xe'
+        });
+        return conn;        
+    }catch(err){
+        console.log('errror from connection function',err)
+    }
+}
+
+
+///////////function for getting data as rows
+async function fetchDataCustomers(){
+    try{
+        const conn = await getConnected();
+        const result =  await conn.execute('SELECT * FROM hr.customers');
+        return result.rows;
+    }catch(err){
+            console.log('error from fetchDatafunction:',err);
+    }
+
+
+}
+
+
+
+//////////sending helloworld when request to /
+app.get('/',(req,res)=>{
+    res.send('hello world !');
+})
+
+
+///////sending data when request to /customers
+app.get('/customers',async (req,res)=>{
+    try{
+        const odbRes = await fetchDataCustomers();
+        res.send(odbRes);
+    }catch(err){
+        console.log('error from /customers function :',err);
+        res.send(`error from /customers function: ${err}`);
+    }
+})
+
+///////listening to server
+app.listen(5000,()=>{console.log(`listen to port ${PORT}`)})
+
